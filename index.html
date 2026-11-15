@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Playground - Visualização Lúdica de Ordenação</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 Sorting Playground</h1>
+            <p>Veja algoritmos de ordenação ganharem vida com cores e sons</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="algorithm">Algoritmo</label>
+                <select id="algorithm">
+                    <option value="bubble">Bubble Sort</option>
+                    <option value="selection">Selection Sort</option>
+                    <option value="insertion">Insertion Sort</option>
+                    <option value="merge">Merge Sort</option>
+                    <option value="quick">Quick Sort</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="size">Tamanho <span id="size-value">50</span></label>
+                <input type="range" id="size" min="10" max="200" value="50">
+            </div>
+
+            <div class="control-group">
+                <label for="speed">Velocidade <span id="speed-value">30</span></label>
+                <input type="range" id="speed" min="1" max="100" value="30">
+            </div>
+
+            <div class="control-group actions">
+                <button id="new-array">🔄 Novo Array</button>
+                <button id="start-pause" class="btn-primary">▶️ Iniciar</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-label">Comparações</span>
+                <span class="stat-value" id="comparisons">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Trocas</span>
+                <span class="stat-value" id="swaps">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Estado</span>
+                <span class="stat-value" id="status">Pronto</span>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <div id="bars"></div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item"><span class="color-box default"></span>Padrão</div>
+            <div class="legend-item"><span class="color-box comparing"></span>Comparando</div>
+            <div class="legend-item"><span class="color-box swapping"></span>Trocando</div>
+            <div class="legend-item"><span class="color-box sorted"></span>Ordenado</div>
+        </div>
+    </div>
+
+    <script src="js/visualizer.js"></script>
+    <script src="js/algorithms/bubble.js"></script>
+    <script src="js/algorithms/selection.js"></script>
+    <script src="js/algorithms/insertion.js"></script>
+    <script src="js/algorithms/merge.js"></script>
+    <script src="js/algorithms/quick.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
