@@ -27,14 +27,11 @@ let state = {
     isPaused: false,
     currentAlgorithm: 'bubble',
     audioCtx: null,
-    generator: null,
+    animationPromise: null,
+    cancelAnimation: false,
 };
 
 const visualizer = new Visualizer('bars');
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 function getDelay() {
     return Math.max(0, 200 - parseInt(speedInput.value, 10) * 1.9);
@@ -61,6 +58,7 @@ function playTone(value) {
 }
 
 function generateArray() {
+    state.cancelAnimation = true;
     const size = parseInt(sizeInput.value, 10);
     state.array = Array.from({ length: size }, () => Math.floor(Math.random() * 90) + 10);
     state.sortedIndices = new Set();
@@ -68,16 +66,14 @@ function generateArray() {
     state.swaps = 0;
     updateStats();
 
-    // Cria as barras no DOM
-    visualizer.setup(state.array);
-    visualizer.draw(state.array, { comparing: [], swapping: [], sorted: new Set() });
+    visualizer.renderBars(state.array);
+    visualizer.clearHighlight();
 
     statusEl.textContent = 'Pronto';
     startPauseBtn.textContent = '▶️ Iniciar';
     startPauseBtn.classList.remove('running');
     state.isRunning = false;
     state.isPaused = false;
-    state.generator = null;
 }
 
 function updateStats() {
@@ -89,65 +85,79 @@ async function runAlgorithm() {
     const algoFn = algorithmMap[state.currentAlgorithm];
     if (!algoFn) return;
 
+    // Trabalha em uma cópia para não destruir o array original acidentalmente
     const working = [...state.array];
-    state.generator = algoFn(working);
 
     state.isRunning = true;
     state.isPaused = false;
+    state.cancelAnimation = false;
     startPauseBtn.textContent = '⏸️ Pausar';
     startPauseBtn.classList.add('running');
     statusEl.textContent = 'Executando...';
 
+    initAudio();
+
     try {
-        for (const step of state.generator) {
-            while (state.isPaused) {
-                await sleep(100);
-                if (!state.isRunning) return;
-            }
-            if (!state.isRunning) return;
+        state.animationPromise = visualizer.run(algoFn, working, getDelay(), {
+            onStep: async (step) => {
+                // Loop de pausa: enquanto pausado, espera
+                while (state.isPaused && !state.cancelAnimation) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                if (state.cancelAnimation) return false;
 
-            state.array = working;
+                state.array = working;
 
-            if (step.type === 'compare') {
-                state.comparisons++;
-                const [i, j] = step.indices;
-                initAudio();
-                playTone(state.array[i]);
-                playTone(state.array[j]);
-                visualizer.draw(state.array, {
-                    comparing: [i, j], swapping: [], sorted: state.sortedIndices,
-                });
-            } else if (step.type === 'swap') {
-                state.swaps++;
-                const [i, j] = step.indices;
-                initAudio();
-                playTone(state.array[i]);
-                if (j !== undefined) playTone(state.array[j]);
-                visualizer.draw(state.array, {
-                    comparing: [], swapping: [i, j], sorted: state.sortedIndices,
-                });
-            } else if (step.type === 'sorted') {
-                const [i] = step.indices;
-                state.sortedIndices.add(i);
-                visualizer.draw(state.array, {
-                    comparing: [], swapping: [], sorted: state.sortedIndices,
-                });
-            } else if (step.type === 'done') {
-                break;
-            }
+                if (step.type === 'compare') {
+                    state.comparisons++;
+                    const [i, j] = step.indices;
+                    playTone(state.array[i]);
+                    playTone(state.array[j]);
+                    visualizer.highlight([i, j], 'comparing');
+                    visualizer.renderBars(state.array);
+                } else if (step.type === 'swap') {
+                    state.swaps++;
+                    const [i, j] = step.indices;
+                    playTone(state.array[i]);
+                    if (j !== undefined) playTone(state.array[j]);
+                    visualizer.highlight([i, j], 'swapping');
+                    visualizer.renderBars(state.array);
+                } else if (step.type === 'overwrite') {
+                    state.swaps++;
+                    const [i] = step.indices;
+                    playTone(state.array[i]);
+                    visualizer.highlight([i], 'swapping');
+                    visualizer.renderBars(state.array);
+                } else if (step.type === 'sorted') {
+                    const [i] = step.indices;
+                    state.sortedIndices.add(i);
+                    visualizer.highlight([i], 'sorted');
+                    visualizer.renderBars(state.array);
+                } else if (step.type === 'done') {
+                    return false; // sinaliza fim
+                }
 
-            updateStats();
-            await sleep(getDelay());
-        }
+                updateStats();
+                return true;
+            },
+            onDone: () => {
+                state.array = working;
+                for (let i = 0; i < state.array.length; i++) state.sortedIndices.add(i);
+                visualizer.renderBars(state.array);
+                visualizer.highlight([], 'sorted');
+                // Marca todas como ordenadas
+                for (let i = 0; i < state.array.length; i++) {
+                    visualizer.bars[i].classList.add('sorted');
+                }
+                statusEl.textContent = 'Ordenado! ✅';
+                startPauseBtn.textContent = '▶️ Iniciar';
+                startPauseBtn.classList.remove('running');
+                state.isRunning = false;
+                state.isPaused = false;
+            },
+        });
 
-        state.array = working;
-        for (let i = 0; i < state.array.length; i++) state.sortedIndices.add(i);
-        visualizer.draw(state.array, { comparing: [], swapping: [], sorted: state.sortedIndices });
-        statusEl.textContent = 'Ordenado! ✅';
-        startPauseBtn.textContent = '▶️ Iniciar';
-        startPauseBtn.classList.remove('running');
-        state.isRunning = false;
-        state.isPaused = false;
+        await state.animationPromise;
     } catch (err) {
         console.error(err);
         statusEl.textContent = 'Erro';
@@ -161,9 +171,6 @@ function init() {
     generateArray();
 
     newArrayBtn.addEventListener('click', () => {
-        state.isRunning = false;
-        state.isPaused = false;
-        state.generator = null;
         generateArray();
     });
 
@@ -195,8 +202,9 @@ function init() {
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Space') {
             e.preventDefault();
-            if (!state.isRunning) runAlgorithm();
-            else {
+            if (!state.isRunning) {
+                runAlgorithm();
+            } else {
                 state.isPaused = !state.isPaused;
                 startPauseBtn.textContent = state.isPaused ? '▶️ Continuar' : '⏸️ Pausar';
                 statusEl.textContent = state.isPaused ? 'Pausado' : 'Executando...';

@@ -191,7 +191,7 @@ button.btn-primary.running:hover {
     padding: 1rem;
     margin-bottom: 1.5rem;
     box-shadow: var(--shadow);
-    min-height: 300px;
+    height: 340px;
     display: flex;
     align-items: flex-end;
     justify-content: center;
@@ -208,13 +208,12 @@ button.btn-primary.running:hover {
     justify-content: center;
 }
 
-/* Cada barra é um div */
+/* Cada barra é um div - largura definida via JS (style.width) */
 .bar {
-    width: 100%;
     min-width: 2px;
     background: var(--default);
     border-radius: 2px 2px 0 0;
-    transition: background-color 0.1s ease;
+    transition: background-color 0.1s ease, height 0.05s ease;
     box-shadow: 0 0 4px rgba(0,0,0,0.3);
 }
 
