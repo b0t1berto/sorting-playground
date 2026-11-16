@@ -35,10 +35,28 @@
                 <input type="range" id="speed" min="1" max="100" value="30">
             </div>
 
+            <div class="control-group">
+                <label for="algorithm2">Algoritmo 2 (Corrida)</label>
+                <select id="algorithm2">
+                    <option value="bubble">Bubble Sort</option>
+                    <option value="selection">Selection Sort</option>
+                    <option value="insertion">Insertion Sort</option>
+                    <option value="merge">Merge Sort</option>
+                    <option value="quick">Quick Sort</option>
+                </select>
+            </div>
+
             <div class="control-group actions">
                 <button id="new-array">🔄 Novo Array</button>
                 <button id="start-pause" class="btn-primary">▶️ Iniciar</button>
+                <button id="race" class="btn-primary">🏁 Corrida</button>
             </div>
+        </div>
+
+        <div id="info-panel" class="info-box">
+            <h3 id="info-name">Bubble Sort</h3>
+            <p id="info-complexity">Complexidade: O(n²)</p>
+            <p id="info-desc">Repetidamente percorre o array, compara adjacentes e troca se estiverem fora de ordem.</p>
         </div>
 
         <div class="stats">
@@ -58,6 +76,18 @@
 
         <div class="canvas-container">
             <div id="bars"></div>
+        </div>
+
+        <div id="race-container" class="race-mode">
+            <div class="race-side">
+                <h3>Algoritmo A</h3>
+                <div id="bars-a"></div>
+            </div>
+            <div class="race-side">
+                <h3>Algoritmo B</h3>
+                <div id="bars-b"></div>
+            </div>
+            <div id="race-result" class="race-result"></div>
         </div>
 
         <div class="legend">

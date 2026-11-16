@@ -221,6 +221,105 @@ button.btn-primary.running:hover {
 .bar.swapping  { background: var(--swapping); }
 .bar.sorted    { background: var(--sorted); }
 
+/* Cores do arco-íris aplicadas por posição no array ordenado */
+.rainbow-0 { background: #ff0000; } /* vermelho */
+.rainbow-1 { background: #ff7f00; } /* laranja */
+.rainbow-2 { background: #ffff00; } /* amarelo */
+.rainbow-3 { background: #00ff00; } /* verde */
+.rainbow-4 { background: #0000ff; } /* azul */
+.rainbow-5 { background: #4b0082; } /* índigo */
+.rainbow-6 { background: #8b00ff; } /* violeta */
+
+/* Animação de varredura de vitória (verde da esquerda para a direita) */
+@keyframes victory-sweep {
+    from { background: var(--default); }
+    to { background: var(--sorted); }
+}
+.bar.victory {
+    animation: victory-sweep 0.3s ease-out forwards;
+}
+
+/* Painel de informações do algoritmo */
+.info-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.info-box h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--accent);
+    font-size: 1.25rem;
+}
+.info-box p {
+    margin: 0.25rem 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+.info-box p strong {
+    color: var(--text-primary);
+}
+
+/* Modo corrida: dois algoritmos lado a lado */
+.race-mode {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    display: none; /* escondido por padrão */
+}
+.race-mode.visible {
+    display: grid;
+}
+.race-side {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.race-side h3 {
+    margin: 0 0 0.75rem 0;
+    color: var(--accent);
+    font-size: 1rem;
+    text-align: center;
+}
+#bars-a, #bars-b {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 220px;
+    width: 100%;
+    justify-content: center;
+}
+.race-result {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-top: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-height: 1.5rem;
+}
+
+/* Ajuste responsivo para corrida */
+@media (max-width: 600px) {
+    .race-mode {
+        grid-template-columns: 1fr;
+    }
+    #bars-a, #bars-b {
+        height: 160px;
+    }
+}
+
 .legend {
     display: flex;
     justify-content: center;

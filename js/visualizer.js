@@ -74,6 +74,36 @@ class Visualizer {
     }
 
     /**
+     * Define a cor de fundo de uma barra específica.
+     * @param {number} index - Índice da barra
+     * @param {string} color - Qualquer valor CSS de cor (ex: '#ff0000', 'hsl(...)', 'var(--sorted)')
+     */
+    setBarColor(index, color) {
+        if (this.bars[index]) {
+            this.bars[index].style.background = color;
+        }
+    }
+
+    /**
+     * Remove a cor personalizada de uma barra, voltando ao padrão.
+     * @param {number} index - Índice da barra
+     */
+    clearBarColor(index) {
+        if (this.bars[index]) {
+            this.bars[index].style.background = '';
+        }
+    }
+
+    /**
+     * Limpa todas as cores personalizadas das barras.
+     */
+    clearAllColors() {
+        for (const bar of this.bars) {
+            bar.style.background = '';
+        }
+    }
+
+    /**
      * Consome um gerador de ordenação com async/await e setTimeout.
      * @param {function} genFn - Função geradora (ex: bubbleSort)
      * @param {number[]} array - Array a ser ordenado (será modificado in-place)

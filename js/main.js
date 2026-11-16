@@ -1,14 +1,22 @@
 // Sorting Playground - main.js
 const algorithmSelect = document.getElementById('algorithm');
+const algorithm2Select = document.getElementById('algorithm2');
 const sizeInput = document.getElementById('size');
 const sizeValue = document.getElementById('size-value');
 const speedInput = document.getElementById('speed');
 const speedValue = document.getElementById('speed-value');
 const newArrayBtn = document.getElementById('new-array');
 const startPauseBtn = document.getElementById('start-pause');
+const raceBtn = document.getElementById('race');
 const comparisonsEl = document.getElementById('comparisons');
 const swapsEl = document.getElementById('swaps');
 const statusEl = document.getElementById('status');
+const infoPanel = document.getElementById('info-panel');
+const infoName = document.getElementById('info-name');
+const infoComplexity = document.getElementById('info-complexity');
+const infoDesc = document.getElementById('info-desc');
+const raceContainer = document.getElementById('race-container');
+const raceResult = document.getElementById('race-result');
 
 const algorithmMap = {
     bubble: window.bubbleSort,
@@ -16,6 +24,34 @@ const algorithmMap = {
     insertion: window.insertionSort,
     merge: window.mergeSort,
     quick: window.quickSort,
+};
+
+const algorithmInfo = {
+    bubble: {
+        name: 'Bubble Sort',
+        complexity: 'O(n²)',
+        desc: 'Repetidamente percorre o array, compara adjacentes e troca se estiverem fora de ordem.'
+    },
+    selection: {
+        name: 'Selection Sort',
+        complexity: 'O(n²)',
+        desc: 'Encontra o menor elemento do restante não ordenado e coloca na posição correta.'
+    },
+    insertion: {
+        name: 'Insertion Sort',
+        complexity: 'O(n²)',
+        desc: 'Constrói a parte ordenada um elemento por vez, inserindo cada novo item na posição certa.'
+    },
+    merge: {
+        name: 'Merge Sort',
+        complexity: 'O(n log n)',
+        desc: 'Divide o array ao meio recursivamente e mescla as metades ordenadas.'
+    },
+    quick: {
+        name: 'Quick Sort',
+        complexity: 'O(n log n)',
+        desc: 'Escolhe um pivô, particiona o array em torno dele e ordena recursivamente as partes.'
+    },
 };
 
 let state = {
@@ -29,9 +65,16 @@ let state = {
     audioCtx: null,
     animationPromise: null,
     cancelAnimation: false,
+    race: {
+        active: false,
+        winner: null,
+        finishedCount: 0,
+    },
 };
 
 const visualizer = new Visualizer('bars');
+const raceVisualizerA = new Visualizer('bars-a');
+const raceVisualizerB = new Visualizer('bars-b');
 
 function getDelay() {
     return Math.max(0, 200 - parseInt(speedInput.value, 10) * 1.9);
@@ -57,10 +100,14 @@ function playTone(value) {
     osc.stop(state.audioCtx.currentTime + 0.06);
 }
 
+function generateRandomArray() {
+    const size = parseInt(sizeInput.value, 10);
+    return Array.from({ length: size }, () => Math.floor(Math.random() * 90) + 10);
+}
+
 function generateArray() {
     state.cancelAnimation = true;
-    const size = parseInt(sizeInput.value, 10);
-    state.array = Array.from({ length: size }, () => Math.floor(Math.random() * 90) + 10);
+    state.array = generateRandomArray();
     state.sortedIndices = new Set();
     state.comparisons = 0;
     state.swaps = 0;
@@ -68,6 +115,7 @@ function generateArray() {
 
     visualizer.renderBars(state.array);
     visualizer.clearHighlight();
+    visualizer.clearAllColors();
 
     statusEl.textContent = 'Pronto';
     startPauseBtn.textContent = '▶️ Iniciar';
@@ -79,6 +127,40 @@ function generateArray() {
 function updateStats() {
     comparisonsEl.textContent = state.comparisons;
     swapsEl.textContent = state.swaps;
+}
+
+function updateInfoPanel() {
+    const info = algorithmInfo[state.currentAlgorithm];
+    if (!info) return;
+    infoName.textContent = info.name;
+    infoComplexity.textContent = `Complexidade: ${info.complexity}`;
+    infoDesc.textContent = info.desc;
+}
+
+/**
+ * Pinta as barras com um degradê de arco-íris com base na posição ordenada.
+ * @param {Visualizer} viz - Instância do Visualizer
+ * @param {number} n - Número de barras
+ */
+function applyRainbow(viz, n) {
+    for (let i = 0; i < n; i++) {
+        const hue = (i / Math.max(n - 1, 1)) * 360;
+        viz.setBarColor(i, `hsl(${hue}, 100%, 50%)`);
+    }
+}
+
+/**
+ * Animação de vitória: varredura verde da esquerda para a direita.
+ * @param {Visualizer} viz - Instância do Visualizer
+ * @param {number} n - Número de barras
+ * @param {number} stepDelay - Delay entre cada barra (ms)
+ */
+async function victorySweep(viz, n, stepDelay = 20) {
+    for (let i = 0; i < n; i++) {
+        viz.setBarColor(i, 'var(--sorted)');
+        viz.bars[i].classList.add('victory');
+        await new Promise(resolve => setTimeout(resolve, stepDelay));
+    }
 }
 
 async function runAlgorithm() {
@@ -140,15 +222,17 @@ async function runAlgorithm() {
                 updateStats();
                 return true;
             },
-            onDone: () => {
+            onDone: async () => {
                 state.array = working;
                 for (let i = 0; i < state.array.length; i++) state.sortedIndices.add(i);
                 visualizer.renderBars(state.array);
-                visualizer.highlight([], 'sorted');
-                // Marca todas como ordenadas
-                for (let i = 0; i < state.array.length; i++) {
-                    visualizer.bars[i].classList.add('sorted');
-                }
+
+                // Arco-íris ao final
+                applyRainbow(visualizer, state.array.length);
+
+                // Animação de vitória (varredura verde)
+                await victorySweep(visualizer, state.array.length);
+
                 statusEl.textContent = 'Ordenado! ✅';
                 startPauseBtn.textContent = '▶️ Iniciar';
                 startPauseBtn.classList.remove('running');
@@ -167,8 +251,81 @@ async function runAlgorithm() {
     }
 }
 
+/**
+ * Modo corrida: executa dois algoritmos lado a lado no mesmo array.
+ */
+async function runRace() {
+    if (state.race.active) return;
+
+    state.race.active = true;
+    state.race.winner = null;
+
+    raceContainer.classList.add('visible');
+    raceResult.textContent = 'Corrida em andamento...';
+
+    const size = parseInt(sizeInput.value, 10);
+    const commonArray = generateRandomArray();
+
+    const algoA = algorithmMap[algorithmSelect.value];
+    const algoB = algorithmMap[algorithm2Select.value];
+
+    // Desenha o mesmo array inicial nos dois lados
+    raceVisualizerA.renderBars([...commonArray]);
+    raceVisualizerB.renderBars([...commonArray]);
+    raceVisualizerA.clearAllColors();
+    raceVisualizerB.clearAllColors();
+
+    const delay = getDelay();
+    let firstFinisher = null;
+
+    const runSide = async (viz, algoFn, label) => {
+        const working = [...commonArray];
+        const generator = algoFn(working);
+        try {
+            for (const step of generator) {
+                if (!state.race.active) return null;
+                const [i, j] = step.indices;
+                viz.renderBars(working);
+                if (step.type === 'compare') viz.highlight([i, j], 'comparing');
+                else if (step.type === 'swap' || step.type === 'overwrite') viz.highlight([i, j !== undefined ? j : i], 'swapping');
+                else if (step.type === 'sorted') viz.highlight([i], 'sorted');
+                await viz._sleep(delay);
+            }
+            applyRainbow(viz, working.length);
+            await victorySweep(viz, working.length, 10);
+        } catch (err) {
+            console.error('Erro no lado da corrida:', label, err);
+        }
+        // O primeiro a chegar aqui define o vencedor
+        if (!firstFinisher) {
+            firstFinisher = label;
+            console.log('Vencedor da corrida:', label);
+        }
+        return label;
+    };
+
+    const promiseA = runSide(raceVisualizerA, algoA, 'Algoritmo A');
+    const promiseB = runSide(raceVisualizerB, algoB, 'Algoritmo B');
+
+    await Promise.all([promiseA, promiseB]);
+
+    const winner = firstFinisher || 'Empate';
+    state.race.winner = winner;
+    raceResult.textContent = winner ? `🏆 Vencedor: ${winner}` : 'Corrida finalizada';
+    state.race.active = false;
+    raceBtn.textContent = '🏁 Corrida';
+}
+
+function resetRace() {
+    state.race.active = false;
+    state.race.winner = null;
+    raceContainer.classList.remove('visible');
+    raceResult.textContent = '';
+}
+
 function init() {
     generateArray();
+    updateInfoPanel();
 
     newArrayBtn.addEventListener('click', () => {
         generateArray();
@@ -185,9 +342,19 @@ function init() {
         }
     });
 
+    raceBtn.addEventListener('click', () => {
+        if (state.race.active) {
+            resetRace();
+            raceBtn.textContent = '🏁 Corrida';
+        } else {
+            runRace();
+            raceBtn.textContent = '⏹️ Parar Corrida';
+        }
+    });
+
     sizeInput.addEventListener('input', (e) => {
         sizeValue.textContent = e.target.value;
-        if (!state.isRunning) generateArray();
+        if (!state.isRunning && !state.race.active) generateArray();
     });
 
     speedInput.addEventListener('input', (e) => {
@@ -196,15 +363,20 @@ function init() {
 
     algorithmSelect.addEventListener('change', (e) => {
         state.currentAlgorithm = e.target.value;
-        if (!state.isRunning) generateArray();
+        updateInfoPanel();
+        if (!state.isRunning && !state.race.active) generateArray();
+    });
+
+    algorithm2Select.addEventListener('change', () => {
+        // Apenas mantém a seleção do algoritmo 2 da corrida
     });
 
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Space') {
             e.preventDefault();
-            if (!state.isRunning) {
+            if (!state.isRunning && !state.race.active) {
                 runAlgorithm();
-            } else {
+            } else if (state.isRunning && !state.race.active) {
                 state.isPaused = !state.isPaused;
                 startPauseBtn.textContent = state.isPaused ? '▶️ Continuar' : '⏸️ Pausar';
                 statusEl.textContent = state.isPaused ? 'Pausado' : 'Executando...';
