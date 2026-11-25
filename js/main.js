@@ -138,18 +138,6 @@ function updateInfoPanel() {
 }
 
 /**
- * Pinta as barras com um degradê de arco-íris com base na posição ordenada.
- * @param {Visualizer} viz - Instância do Visualizer
- * @param {number} n - Número de barras
- */
-function applyRainbow(viz, n) {
-    for (let i = 0; i < n; i++) {
-        const hue = (i / Math.max(n - 1, 1)) * 360;
-        viz.setBarColor(i, `hsl(${hue}, 100%, 50%)`);
-    }
-}
-
-/**
  * Animação de vitória: varredura verde da esquerda para a direita.
  * @param {Visualizer} viz - Instância do Visualizer
  * @param {number} n - Número de barras
@@ -227,9 +215,6 @@ async function runAlgorithm() {
                 for (let i = 0; i < state.array.length; i++) state.sortedIndices.add(i);
                 visualizer.renderBars(state.array);
 
-                // Arco-íris ao final
-                applyRainbow(visualizer, state.array.length);
-
                 // Animação de vitória (varredura verde)
                 await victorySweep(visualizer, state.array.length);
 
@@ -291,7 +276,6 @@ async function runRace() {
                 else if (step.type === 'sorted') viz.highlight([i], 'sorted');
                 await viz._sleep(delay);
             }
-            applyRainbow(viz, working.length);
             await victorySweep(viz, working.length, 10);
         } catch (err) {
             console.error('Erro no lado da corrida:', label, err);

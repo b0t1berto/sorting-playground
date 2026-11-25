@@ -69,7 +69,7 @@ class Visualizer {
      */
     clearHighlight() {
         for (const bar of this.bars) {
-            bar.classList.remove('comparing', 'swapping', 'sorted');
+            bar.classList.remove('comparing', 'swapping', 'sorted', 'victory');
         }
     }
 

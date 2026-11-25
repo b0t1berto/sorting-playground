@@ -1,6 +1,6 @@
 # 🎨 Sorting Playground
 
-Uma demonstração lúdica e interativa de algoritmos de ordenação. Veja barras de alturas diferentes se reorganizarem em tempo real, com cores por estado, sons que variam com a altura da barra, contadores de comparações e trocas, modo corrida entre dois algoritmos, arco-íris ao final e animação de vitória.
+Uma demonstração lúdica e interativa de algoritmos de ordenação. Veja barras de alturas diferentes se reorganizarem em tempo real, com cores por estado, sons que variam com a altura da barra, contadores de comparações e trocas, modo corrida entre dois algoritmos e animação de vitória.
 
 ---
 
@@ -52,8 +52,6 @@ python3 -m http.server 8000
   - 🟢 Verde: já ordenado / em posição final
 
 - **Sons:** Cada ação emite um tom cuja frequência varia com a altura da barra (Web Audio API + OscillatorNode).
-
-- **Arco-íris:** Ao final da ordenação, as barras formam um degradê de arco-íris da esquerda para a direita.
 
 - **Animação de vitória:** Uma varredura verde percorre as barras da esquerda para a direita quando a ordenação termina.
 
